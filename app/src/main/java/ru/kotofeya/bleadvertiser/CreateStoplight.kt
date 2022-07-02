@@ -8,10 +8,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -20,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 
 @Composable
-fun CreateStoplight(navController: NavController, clickListener: ClickListener) {
+fun CreateStoplight(navController: NavController, viewModel: PacksViewModel) {
     Column(
         modifier = Modifier
             .background(Color.White)
@@ -107,7 +104,9 @@ fun CreateStoplight(navController: NavController, clickListener: ClickListener) 
                     byteArr[19] = s.value.toByte()
                     byteArr[20] = s.value.toByte()
                     byteArr[21] = s.value.toByte()
-                    clickListener.saveNewPackage("newPack", byteArr)
+
+                    val packageEntity = PackageEntity(null, "name", byteArr)
+                    viewModel.saveNewPack(packageEntity)
                     navController.popBackStack()
                 }
             ) {

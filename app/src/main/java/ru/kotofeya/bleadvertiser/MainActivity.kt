@@ -17,22 +17,18 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import kotlinx.coroutines.*
 
 
 /*
@@ -97,9 +93,6 @@ triol:
 
 class MainActivity : ComponentActivity(), ClickListener{
 
-    private val job = Job()
-    val scope = CoroutineScope(job + Dispatchers.Main)
-
     private lateinit var btManager: BluetoothManager
     private lateinit var btAdapter: BluetoothAdapter
     private lateinit var btAdvertiser: BluetoothLeAdvertiser
@@ -107,6 +100,9 @@ class MainActivity : ComponentActivity(), ClickListener{
     private val permissionsRequestCode = 123
 
     private var hasPermissions = false
+
+    private lateinit var packsViewModel: PacksViewModel
+
 
     @RequiresApi(Build.VERSION_CODES.S)
     private val permissions = arrayOf(android.Manifest.permission.BLUETOOTH_ADVERTISE,
@@ -119,9 +115,12 @@ class MainActivity : ComponentActivity(), ClickListener{
     @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
 
-            BtPackage(this)
+        packsViewModel = ViewModelProvider((this), PacksViewModel.Factory(this))
+            .get(PacksViewModel::class.java)
+
+        setContent {
+            BtPackage(this, packsViewModel)
         }
         btManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         btAdapter = btManager.adapter
@@ -182,20 +181,12 @@ class MainActivity : ComponentActivity(), ClickListener{
 
     override fun createNewPackage() {}
 
-    override fun saveNewPackage(name: String, byteArray: ByteArray) {
-        val repo = PackRepository(AppDatabase.getDatabase(context = this).packDao())
-        val packageEntity = PackageEntity(null, "name", byteArray)
-        scope.launch {
-           repo.insertPack(packageEntity = packageEntity)
-        }
-    }
 }
 
 interface ClickListener{
     fun startAdvertising(adv: ByteArray)
     fun stopAdvertising()
     fun createNewPackage()
-    fun saveNewPackage(name: String, byteArray: ByteArray)
 }
 
 
@@ -271,13 +262,15 @@ fun Btn(navController: NavController, route: String, btnText: String){
     }
 }
 
-
 @Composable
-fun BtPackage(clickListener: ClickListener) {
+fun BtPackage(clickListener: ClickListener, viewModel: PacksViewModel) {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = "main"){
-        composable("main"){ Main(clickListener = clickListener, navController = navController)}
-        composable("createtriol"){CreateStoplight(navController = navController, clickListener = clickListener)}
-        composable("showallpacks"){ShowAllPacks(navController = navController, clickListener = clickListener)}
+        composable("main"){ Main(clickListener = clickListener,
+            navController = navController)}
+        composable("createtriol"){CreateStoplight(
+            navController = navController, viewModel)}
+        composable("showallpacks"){ShowAllPacks(
+            navController = navController, viewModel = viewModel)}
     }
 }
