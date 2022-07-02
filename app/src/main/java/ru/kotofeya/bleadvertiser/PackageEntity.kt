@@ -9,5 +9,5 @@ import java.io.Serializable
 data class PackageEntity(
     @ColumnInfo(name = "id") @PrimaryKey(autoGenerate = true) val id: Int? = null,
     @ColumnInfo(name = "name") val name: String?,
-    @ColumnInfo(name = "pack") val pack: ByteArray?
+    @ColumnInfo(name = "pack") var pack: ByteArray?
 ):Serializable

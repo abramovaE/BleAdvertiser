@@ -26,9 +26,11 @@ import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 
 
 /*
@@ -272,5 +274,11 @@ fun BtPackage(clickListener: ClickListener, viewModel: PacksViewModel) {
             navController = navController, viewModel)}
         composable("showallpacks"){ShowAllPacks(
             navController = navController, viewModel = viewModel)}
+        composable("showpack/{packId}",
+            arguments = listOf(navArgument("packId"){type = NavType.IntType})){
+            backStackEntry -> ShowPack(
+            navController = navController,
+            viewModel = viewModel,
+            packId = backStackEntry.arguments?.getInt("packId"))}
     }
 }

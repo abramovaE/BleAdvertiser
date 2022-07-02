@@ -13,4 +13,10 @@ interface PackageDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertPack(packageEntity: PackageEntity)
+
+    @Query("SELECT * FROM package_entity WHERE id=:packId LIMIT 1")
+    fun getPackById(packId: Int): PackageEntity
+
+    @Update
+    fun updatePack(packageEntity: PackageEntity)
 }

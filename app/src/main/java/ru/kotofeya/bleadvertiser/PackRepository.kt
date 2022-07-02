@@ -16,4 +16,12 @@ class PackRepository(private val packageDao: PackageDao) {
     suspend fun insertPack(packageEntity: PackageEntity) = withContext(Dispatchers.IO){
         packageDao.insertPack(packageEntity = packageEntity)
     }
+
+    suspend fun getPackById(id: Int): PackageEntity = withContext(Dispatchers.IO){
+        packageDao.getPackById(id)
+    }
+
+    suspend fun updatePack(packageEntity: PackageEntity) = withContext(Dispatchers.IO){
+        packageDao.updatePack(packageEntity)
+    }
 }

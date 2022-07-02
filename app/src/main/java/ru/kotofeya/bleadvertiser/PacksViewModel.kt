@@ -12,6 +12,10 @@ class PacksViewModel(private val repo: PackRepository): ViewModel() {
     val packsList: LiveData<List<PackageEntity>>
         get() = _packsList
 
+    private val _selectedPack = MutableLiveData<PackageEntity>()
+    val selectedPack: LiveData<PackageEntity> get() = _selectedPack
+
+
     fun loadAllPacks(){
         viewModelScope.launch(Dispatchers.IO){
             _packsList.postValue(repo.getPacks())
@@ -21,6 +25,19 @@ class PacksViewModel(private val repo: PackRepository): ViewModel() {
     fun saveNewPack(packageEntity: PackageEntity){
         viewModelScope.launch(Dispatchers.IO) {
             repo.insertPack(packageEntity)
+        }
+    }
+
+    fun getPackById(id: Int){
+        var packageEntity: PackageEntity
+        viewModelScope.launch(Dispatchers.IO) {
+            _selectedPack.postValue(repo.getPackById(id))
+        }
+    }
+
+    fun updatePack(packageEntity: PackageEntity){
+        viewModelScope.launch (Dispatchers.IO){
+            repo.updatePack(packageEntity)
         }
     }
 
