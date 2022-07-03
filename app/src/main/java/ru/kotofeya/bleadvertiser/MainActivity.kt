@@ -105,6 +105,7 @@ class MainActivity : ComponentActivity(), ClickListener{
 
     private lateinit var packsViewModel: PacksViewModel
 
+    private var isBleAdvInit = false
 
     @RequiresApi(Build.VERSION_CODES.S)
     private val permissions = arrayOf(android.Manifest.permission.BLUETOOTH_ADVERTISE,
@@ -121,11 +122,13 @@ class MainActivity : ComponentActivity(), ClickListener{
         packsViewModel = ViewModelProvider((this), PacksViewModel.Factory(this))
             .get(PacksViewModel::class.java)
 
+
         setContent {
             BtPackage(this, packsViewModel)
         }
         btManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         btAdapter = btManager.adapter
+
         hasPermissions = hasPermissions(this, permissions = permissions)
         if (!hasPermissions) {
             ActivityCompat.requestPermissions(this,
@@ -168,6 +171,7 @@ class MainActivity : ComponentActivity(), ClickListener{
         Log.d("TAG", "startAdvertising(): $adv")
         btAdapter.name = "stp"
         btAdvertiser = btAdapter.bluetoothLeAdvertiser
+        isBleAdvInit = true
         val advSettings = getAdvertiseSettings()
         val callback = createAdvertisingCallBack()
         val advData = getAdvertiseData(adv)
@@ -176,19 +180,16 @@ class MainActivity : ComponentActivity(), ClickListener{
 
     override fun stopAdvertising(){
         Log.d("TAG", "stopAdvertising()")
-        val callback = createAdvertisingCallBack()
-        btAdvertiser.stopAdvertising(callback)
-
+        if(isBleAdvInit) {
+            val callback = createAdvertisingCallBack()
+            btAdvertiser.stopAdvertising(callback)
+        }
     }
-
-    override fun createNewPackage() {}
-
 }
 
 interface ClickListener{
     fun startAdvertising(adv: ByteArray)
     fun stopAdvertising()
-    fun createNewPackage()
 }
 
 
@@ -276,7 +277,7 @@ fun BtPackage(clickListener: ClickListener, viewModel: PacksViewModel) {
             navController = navController, viewModel = viewModel)}
         composable("showpack/{packId}",
             arguments = listOf(navArgument("packId"){type = NavType.IntType})){
-            backStackEntry -> ShowPack(
+            backStackEntry -> ShowStoplight(
             navController = navController,
             viewModel = viewModel,
             packId = backStackEntry.arguments?.getInt("packId"))}

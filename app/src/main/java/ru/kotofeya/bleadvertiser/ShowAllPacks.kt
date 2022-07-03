@@ -20,16 +20,13 @@ import java.util.*
 
 @Composable
 fun ShowAllPacks(navController: NavController, viewModel: PacksViewModel) {
-
     viewModel.loadAllPacks()
+
     var list = viewModel.packsList.value
     if(list == null){
         list = emptyList()
     }
 
-    for (it in list){
-        Log.d("TAG", it.name + " " + Arrays.toString(it.pack))
-    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize()
@@ -44,7 +41,7 @@ fun ShowAllPacks(navController: NavController, viewModel: PacksViewModel) {
 
 
 @Composable
-fun PackRow(packModel: PackageEntity, navController: NavController, viewModel: PacksViewModel){
+fun PackRow(packModel: PackModel, navController: NavController, viewModel: PacksViewModel){
     Row(modifier = Modifier
         .fillMaxSize()) {
         Column(

@@ -7,36 +7,43 @@ import kotlinx.coroutines.launch
 
 class PacksViewModel(private val repo: PackRepository): ViewModel() {
 
-
-    private val _packsList = MutableLiveData<List<PackageEntity>>()
-    val packsList: LiveData<List<PackageEntity>>
+    private val _packsList = MutableLiveData<List<PackModel>>()
+    val packsList: LiveData<List<PackModel>>
         get() = _packsList
 
-    private val _selectedPack = MutableLiveData<PackageEntity>()
-    val selectedPack: LiveData<PackageEntity> get() = _selectedPack
+    private val _selectedPack = MutableLiveData<PackModel>()
+    val selectedPack: LiveData<PackModel> get() = _selectedPack
 
 
     fun loadAllPacks(){
         viewModelScope.launch(Dispatchers.IO){
-            _packsList.postValue(repo.getPacks())
+            val packsList = mutableListOf<PackModel>()
+            for(packEntity in repo.getPacks()){
+                packsList.add(PackModel(packEntity.id!!, packEntity.name!!, packEntity.pack!!))
+            }
+            _packsList.postValue(packsList)
         }
     }
 
-    fun saveNewPack(packageEntity: PackageEntity){
+    fun saveNewPack(packModel: PackModel){
         viewModelScope.launch(Dispatchers.IO) {
+            val packageEntity = PackageEntity(packModel.id, packModel.name, packModel.pack)
             repo.insertPack(packageEntity)
         }
     }
 
     fun getPackById(id: Int){
-        var packageEntity: PackageEntity
+        var packageModel: PackModel
         viewModelScope.launch(Dispatchers.IO) {
-            _selectedPack.postValue(repo.getPackById(id))
+            val packageEntity = repo.getPackById(id)
+            val packModel = PackModel(packageEntity.id!!, packageEntity.name!!, packageEntity.pack!!)
+            _selectedPack.postValue(packModel)
         }
     }
 
-    fun updatePack(packageEntity: PackageEntity){
+    fun updatePack(packModel: PackModel){
         viewModelScope.launch (Dispatchers.IO){
+            val packageEntity = PackageEntity(packModel.id, packModel.name, packModel.pack)
             repo.updatePack(packageEntity)
         }
     }

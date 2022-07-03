@@ -15,13 +15,11 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 
 @Composable
-fun ShowPack (navController: NavController,
-              viewModel: PacksViewModel,
-              packId: Int?){
+fun ShowStoplight (navController: NavController,
+                   viewModel: PacksViewModel,
+                   packId: Int?){
 
     val selectedPack = viewModel.selectedPack.value
-
-
 
     Column(
         modifier = Modifier
@@ -51,7 +49,6 @@ fun ShowPack (navController: NavController,
         val byte13 = packArray!!.get(13)
         val streetId = (byte12 shl 8) + byte13
         val streetIdState = remember{ mutableStateOf(streetId.toString()) }
-
 
         val byte8 = packArray!!.get(8).toInt()
         val byte9 = packArray!!.get(9).toInt()
@@ -86,51 +83,16 @@ fun ShowPack (navController: NavController,
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
 
-                    val byteArr = ByteArray(22)
+                    selectedPack.setArrayValues(
+                        btVersionState.value.toByte(),
+                        serialState.value.toInt(),
+                        transTypeState.value.toByte(),
+                        buzzersState.value.toByte(),
+                        incrementState.value.toByte(),
+                        timeState.value.toInt(),
+                        streetIdState.value.toInt(),
+                        streetSideState.value.toByte())
 
-                    byteArr[0] = btVersionState.value.toByte()
-                    byteArr[1] = s.value.toByte()
-
-                    val serial = serialState.value.toInt()
-                    val serial0 = (serial shr 16).toByte()
-                    val serial1 = (serial shr 8).toByte()
-                    val serial2 = serial.toByte()
-                    byteArr[2] = serial0
-                    byteArr[3] = serial1
-                    byteArr[4] = serial2
-
-                    byteArr[5] = transTypeState.value.toByte()
-                    byteArr[6] = buzzersState.value.toByte()
-                    byteArr[7] = incrementState.value.toByte()
-
-                    val time = timeState.value.toInt()
-                    val time0 = (time shr 24).toByte()
-                    val time1 = (time shr 16).toByte()
-                    val time2 = (time shr 8).toByte()
-                    val time3 = time.toByte()
-                    byteArr[8] = time0
-                    byteArr[9] = time1
-                    byteArr[10] = time2
-                    byteArr[11] = time3
-
-                    val streetId = streetIdState.value.toInt()
-                    val streetId0 = (streetId shr 8).toByte()
-                    val streetId1= streetId.toByte()
-                    byteArr[12] = streetId0
-                    byteArr[13] = streetId1
-
-                    byteArr[14] = s.value.toByte()
-                    byteArr[15] = s.value.toByte()
-
-                    byteArr[16] = streetSideState.value.toByte()
-
-                    byteArr[17] = s.value.toByte()
-                    byteArr[18] = s.value.toByte()
-                    byteArr[19] = s.value.toByte()
-                    byteArr[20] = s.value.toByte()
-                    byteArr[21] = s.value.toByte()
-
-                    selectedPack.pack = byteArr
                     viewModel.updatePack(selectedPack)
                     navController.popBackStack()
                 }
