@@ -1,5 +1,6 @@
 package ru.kotofeya.bleadvertiser
 
+import android.util.Log
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -15,9 +16,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import java.util.*
 
 @Composable
 fun CreateStoplight(navController: NavController, viewModel: PacksViewModel) {
+
+    val pack = PackModel(null, "name", ByteArray(22, {0}))
+    StoplightPackage(pack = pack, viewModel = viewModel, navController = navController)
+
+}
+
+@Composable
+fun StoplightPackage(pack: PackModel, viewModel: PacksViewModel, navController: NavController) {
     Column(
         modifier = Modifier
             .background(Color.White)
@@ -26,64 +36,93 @@ fun CreateStoplight(navController: NavController, viewModel: PacksViewModel) {
                 state = ScrollState(0),
                 enabled = true
             )
+    ){
+    val packArray = pack?.pack
+
+        Log.d("tag", "pack: ${Arrays.toString(packArray)}")
+
+    val deviceNameState = remember { mutableStateOf("stp") }
+    val btVersionState = remember { mutableStateOf(packArray?.get(0).toString()) }
+
+    val byte2 = packArray!!.get(2).toInt()
+    val byte3 = packArray!!.get(3).toInt()
+    val byte4 = packArray.get(4).toInt()
+    val serial = (byte2 shl 16) + (byte3 shl 8) + byte4
+    val serialState = remember { mutableStateOf(serial.toString()) }
+
+    val transTypeState = remember { mutableStateOf(packArray?.get(5).toString()) }
+    val buzzersState = remember { mutableStateOf(packArray?.get(6).toString()) }
+    val incrementState = remember { mutableStateOf(packArray?.get(7).toString()) }
+
+    val byte12 = packArray!!.get(12).toInt()
+    val byte13 = packArray!!.get(13).toInt()
+    val streetId = (byte12 shl 8) + byte13
+    val streetIdState = remember { mutableStateOf(streetId.toString()) }
+
+    val byte8 = packArray.get(8).toInt()
+    val byte9 = packArray.get(9).toInt()
+    val byte10 = packArray.get(10).toInt()
+    val byte11 = packArray.get(11).toInt()
+
+        Log.d("tag", "time: ${byte8 shl 24} $byte9 $byte10 $byte11")
+    val time = (byte8 shl 24) + (byte9 shl 16) + (byte10 shl 8) + byte11
+
+    val timeState = remember { mutableStateOf(time.toString()) }
+        Log.d("tag", "timestate: ${time}")
+
+    val streetSideState = remember { mutableStateOf(packArray?.get(16).toString()) }
+
+    val s = remember { mutableStateOf("0") }
+
+    DataRow("Имя устройства", deviceNameState)
+    DataRow(text = "(10) Версия bt пакета", state = btVersionState)
+    DataRow(text = "(11) Резерв", state = s)
+    DataRow(text = "(12-14) Серийный номер", state = serialState)
+    DataRow(text = "(15) Тип трансивера", state = transTypeState)
+    DataRow(text = "(16) Режим работы светофора", state = buzzersState)
+    DataRow(text = "(17) Инкременты состояния/вызова", state = incrementState)
+    DataRow(text = "(18-21) Время", state = timeState)
+    DataRow(text = "(22-23) Id улицы", state = streetIdState)
+    DataRow(text = "(24-25) Резерв", state = s)
+    DataRow(text = "(26) Сторона улицы", state = streetSideState)
+    DataRow(text = "(27-31) Резерв", state = s)
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(10.dp)
     ) {
-        val deviceNameState = remember { mutableStateOf("stp") }
-        val btVersionState = remember { mutableStateOf("0") }
-        val serialState = remember{ mutableStateOf("0") }
-        val transTypeState = remember{ mutableStateOf("0") }
-        val buzzersState = remember{ mutableStateOf("0") }
-        val incrementState = remember{ mutableStateOf("0") }
-        val streetIdState = remember{ mutableStateOf("0") }
-        val timeState = remember{ mutableStateOf("0") }
-        val streetSideState = remember{ mutableStateOf("0") }
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = {
 
-        val s = remember{ mutableStateOf("0") }
-
-        DataRow("Имя устройства", deviceNameState)
-        DataRow(text = "(10) Версия bt пакета", state = btVersionState)
-        DataRow(text = "(11) Резерв", state = s)
-        DataRow(text = "(12-14) Серийный номер", state = serialState)
-        DataRow(text = "(15) Тип трансивера", state = transTypeState)
-        DataRow(text = "(16) Режим работы светофора", state = buzzersState)
-        DataRow(text = "(17) Инкременты состояния/вызова", state = incrementState)
-        DataRow(text = "(18-21) Время", state = timeState)
-        DataRow(text = "(22-23) Id улицы", state = streetIdState)
-        DataRow(text = "(24-25) Резерв", state = s)
-        DataRow(text = "(26) Сторона улицы", state = streetSideState)
-        DataRow(text = "(27-31) Резерв", state = s)
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(10.dp)
-        ) {
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = {
-                    val packageModel = PackModel(null, "name", null)
-                    packageModel.setArrayValues(
-                        btVersionState.value.toByte(),
-                        serialState.value.toInt(),
-                        transTypeState.value.toByte(),
-                        buzzersState.value.toByte(),
-                        incrementState.value.toByte(),
-                        timeState.value.toInt(),
-                        streetIdState.value.toInt(),
-                        streetSideState.value.toByte())
-
-                    viewModel.saveNewPack(packageModel)
-                    navController.popBackStack()
-                }
-            ) {
-                Text(
-                    text = "Save and return"
+                pack.setArrayValues(
+                    btVersionState.value.toByte(),
+                    serialState.value.toInt(),
+                    transTypeState.value.toByte(),
+                    buzzersState.value.toByte(),
+                    incrementState.value.toByte(),
+                    timeState.value.toInt(),
+                    streetIdState.value.toInt(),
+                    streetSideState.value.toByte()
                 )
+
+                if(pack.id == null || pack.id == 0){
+                    viewModel.saveNewPack(pack)
+                } else {
+                    viewModel.updatePack(pack)
+                }
+
+                navController.popBackStack()
             }
+        ) {
+            Text(
+                text = "Save and return"
+            )
         }
     }
 }
-
-
+}
 
 @Composable
 fun DataRow(text: String, state : MutableState<String>){
