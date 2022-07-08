@@ -2,10 +2,7 @@ package ru.kotofeya.bleadvertiser
 
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
-import android.bluetooth.le.AdvertiseCallback
-import android.bluetooth.le.AdvertiseData
-import android.bluetooth.le.AdvertiseSettings
-import android.bluetooth.le.BluetoothLeAdvertiser
+import android.bluetooth.le.*
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
@@ -31,6 +28,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import java.util.*
 
 
 /*
@@ -107,11 +105,18 @@ class MainActivity : ComponentActivity(), ClickListener{
 
     private var isBleAdvInit = false
 
+    private var startAdvTime = 0L
+
+    private var advSetCallBackList: MutableList<AdvertisingSetCallback> = mutableListOf()
+    private var advTimerList: MutableList<Timer> = mutableListOf()
+
     @RequiresApi(Build.VERSION_CODES.S)
-    private val permissions = arrayOf(android.Manifest.permission.BLUETOOTH_ADVERTISE,
+    private val permissions = arrayOf(
+        android.Manifest.permission.BLUETOOTH_ADVERTISE,
         android.Manifest.permission.BLUETOOTH_CONNECT)
 
-    private fun hasPermissions(context: Context, vararg permissions: String): Boolean = permissions.all {
+    private fun hasPermissions(context: Context,
+                               vararg permissions: String): Boolean = permissions.all {
         ActivityCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
     }
 
@@ -121,7 +126,6 @@ class MainActivity : ComponentActivity(), ClickListener{
 
         packsViewModel = ViewModelProvider((this), PacksViewModel.Factory(this))
             .get(PacksViewModel::class.java)
-
 
         setContent {
             BtPackage(this, packsViewModel)
@@ -136,59 +140,96 @@ class MainActivity : ComponentActivity(), ClickListener{
         }
     }
 
-    private fun getAdvertiseSettings(): AdvertiseSettings? {
-        Log.d("TAG", "getAdvertiseSettings()")
-        return AdvertiseSettings.Builder()
-            .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
-            .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
-            .setConnectable(false)
-            .build()
-    }
-
-    private fun createAdvertisingCallBack(): AdvertiseCallback {
-        Log.d("TAG", "createAdvertisingCallBack()")
-        return object : AdvertiseCallback() {
-            override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
-                Log.d("TAG","onStartSuccess()")
-                super.onStartSuccess(settingsInEffect)
-            }
-            override fun onStartFailure(errorCode: Int) {
-                Log.d("TAG","onStartFailure(): $errorCode")
-                super.onStartFailure(errorCode)
-            }
-        }
-    }
-
     private fun getAdvertiseData(data: ByteArray): AdvertiseData? {
-        Log.d("TAG", "getAdvertiseData(String data): ${data.contentToString()}")
         return AdvertiseData.Builder()
             .setIncludeDeviceName(true)
             .addManufacturerData(0xffff, data)
             .build()
     }
 
-    override fun startAdvertising(adv: ByteArray){
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun startAdvertising(adv: ByteArray,
+                                  changeTime: Boolean,
+                                  changeCounterIncr: Boolean) {
         Log.d("TAG", "startAdvertising(): $adv")
+        startAdvTime = System.currentTimeMillis()
         btAdapter.name = "stp"
         btAdvertiser = btAdapter.bluetoothLeAdvertiser
         isBleAdvInit = true
-        val advSettings = getAdvertiseSettings()
-        val callback = createAdvertisingCallBack()
         val advData = getAdvertiseData(adv)
-        btAdvertiser.startAdvertising(advSettings, advData, callback)
+        var currentAdvSet: AdvertisingSet? = null
+
+        val params = AdvertisingSetParameters.Builder()
+            .setLegacyMode(true)
+            .setConnectable(false)
+            .build()
+
+        val advSetCallBack = object : AdvertisingSetCallback() {
+            override fun onAdvertisingSetStarted(
+                advertisingSet: AdvertisingSet?,
+                txPower: Int,
+                status: Int
+            ) {
+                Log.d("TAG", "onAdvSetStarted()")
+                currentAdvSet = advertisingSet
+            }
+        }
+
+        advSetCallBackList.add(advSetCallBack)
+
+
+        btAdvertiser.startAdvertisingSet(
+            params, advData,
+            null, null, null, advSetCallBack
+        )
+
+        if (changeTime || changeCounterIncr) {
+            var advTimer = Timer()
+            advTimerList.add(advTimer)
+            advTimer?.schedule(object : TimerTask() {
+                override fun run() {
+                    if(changeTime) {
+                        val time = getTimeFromByteArray(adv) + 1000L
+                        val timeArray = getByteArrayFromTime(time = time)
+                        Log.d("TAG", "time: $time")
+                        adv[8] = timeArray[0]
+                        adv[9] = timeArray[1]
+                        adv[10] = timeArray[2]
+                        adv[11] = timeArray[3]
+                    }
+
+                    if(changeCounterIncr){
+                        adv[7] = adv[7].inc()
+                        Log.d("TAG", "increment: ${adv[7]}")
+                    }
+                    val newAdvData = getAdvertiseData(adv)
+                    currentAdvSet?.setAdvertisingData(newAdvData)
+                }
+            }, 0, 1000)
+        }
     }
 
+
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun stopAdvertising(){
         Log.d("TAG", "stopAdvertising()")
         if(isBleAdvInit) {
-            val callback = createAdvertisingCallBack()
-            btAdvertiser.stopAdvertising(callback)
+            advTimerList.forEach(::cancelTimer)
+            advSetCallBackList.forEach(btAdvertiser::stopAdvertisingSet)
         }
+    }
+
+    fun cancelTimer(timer: Timer){
+        timer.cancel()
     }
 }
 
+
+
 interface ClickListener{
-    fun startAdvertising(adv: ByteArray)
+    fun startAdvertising(adv: ByteArray,
+                         changeTime: Boolean,
+                         changeCounterIncr: Boolean)
     fun stopAdvertising()
 }
 
@@ -214,7 +255,10 @@ fun Main(clickListener: ClickListener, navController: NavController){
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
                     val byteArr = ByteArray(22)
-                    clickListener.startAdvertising(byteArr)
+                    clickListener.startAdvertising(byteArr,
+                        changeTime = false,
+                        changeCounterIncr = false
+                    )
                 }
             ) {
                 Text(
@@ -272,14 +316,15 @@ fun BtPackage(clickListener: ClickListener, viewModel: PacksViewModel) {
         composable("main"){ Main(clickListener = clickListener,
             navController = navController)}
         composable("createtriol"){CreateStoplight(
-            navController = navController, viewModel)}
+            navController = navController, viewModel, clickListener = clickListener)}
         composable("showallpacks"){ShowAllPacks(
             navController = navController, viewModel = viewModel)}
         composable("showpack/{packId}",
             arguments = listOf(navArgument("packId"){type = NavType.IntType})){
-            backStackEntry -> ShowStoplight(
+        ShowStoplight(
             navController = navController,
             viewModel = viewModel,
-            packId = backStackEntry.arguments?.getInt("packId"))}
+            clickListener = clickListener
+        )}
     }
 }

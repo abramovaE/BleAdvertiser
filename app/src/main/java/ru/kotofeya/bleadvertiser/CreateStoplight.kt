@@ -1,6 +1,5 @@
 package ru.kotofeya.bleadvertiser
 
-import android.util.Log
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -8,26 +7,33 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
+import androidx.compose.material.Checkbox
+import androidx.compose.material.CheckboxDefaults
 import androidx.compose.material.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import java.util.*
+
 
 @Composable
-fun CreateStoplight(navController: NavController, viewModel: PacksViewModel) {
-
-    val pack = PackModel(null, "name", ByteArray(22, {0}))
-    StoplightPackage(pack = pack, viewModel = viewModel, navController = navController)
-
+fun CreateStoplight(navController: NavController, viewModel: PacksViewModel, clickListener: ClickListener) {
+    val pack = PackModel(null, "name", ByteArray(22) { 0 })
+    StoplightPackage(pack = pack, viewModel = viewModel, navController = navController, clickListener = clickListener)
 }
 
+
 @Composable
-fun StoplightPackage(pack: PackModel, viewModel: PacksViewModel, navController: NavController) {
+fun StoplightPackage(pack: PackModel,
+                     viewModel: PacksViewModel,
+                     navController: NavController,
+                     clickListener: ClickListener) {
     Column(
         modifier = Modifier
             .background(Color.White)
@@ -37,42 +43,36 @@ fun StoplightPackage(pack: PackModel, viewModel: PacksViewModel, navController: 
                 enabled = true
             )
     ){
-    val packArray = pack?.pack
-
-        Log.d("tag", "pack: ${Arrays.toString(packArray)}")
+    val packArray = pack.pack
 
     val deviceNameState = remember { mutableStateOf("stp") }
     val btVersionState = remember { mutableStateOf(packArray?.get(0).toString()) }
 
-    val byte2 = packArray!!.get(2).toInt()
-    val byte3 = packArray!!.get(3).toInt()
-    val byte4 = packArray.get(4).toInt()
-    val serial = (byte2 shl 16) + (byte3 shl 8) + byte4
+    val byte2 = packArray!![2].toInt()
+    val byte3 = packArray[3].toInt()
+    val byte4 = packArray[4].toInt()
+    val serial = (byte2 and 0xff shl 16) or (byte3 and 0xff shl 8) or (byte4 and 0xff)
     val serialState = remember { mutableStateOf(serial.toString()) }
 
-    val transTypeState = remember { mutableStateOf(packArray?.get(5).toString()) }
-    val buzzersState = remember { mutableStateOf(packArray?.get(6).toString()) }
-    val incrementState = remember { mutableStateOf(packArray?.get(7).toString()) }
+    val transTypeState = remember { mutableStateOf(packArray[5].toString()) }
+    val buzzersState = remember { mutableStateOf(packArray[6].toString()) }
+    val incrementState = remember { mutableStateOf(packArray[7].toString()) }
 
-    val byte12 = packArray!!.get(12).toInt()
-    val byte13 = packArray!!.get(13).toInt()
-    val streetId = (byte12 shl 8) + byte13
+    val byte12 = packArray[12].toInt()
+    val byte13 = packArray[13].toInt()
+    val streetId = ((byte12 shl 8)) + (byte13)
     val streetIdState = remember { mutableStateOf(streetId.toString()) }
 
-    val byte8 = packArray.get(8).toInt()
-    val byte9 = packArray.get(9).toInt()
-    val byte10 = packArray.get(10).toInt()
-    val byte11 = packArray.get(11).toInt()
-
-        Log.d("tag", "time: ${byte8 shl 24} $byte9 $byte10 $byte11")
-    val time = (byte8 shl 24) + (byte9 shl 16) + (byte10 shl 8) + byte11
-
+    val time = getTimeFromByteArray(packArray)
     val timeState = remember { mutableStateOf(time.toString()) }
-        Log.d("tag", "timestate: ${time}")
 
-    val streetSideState = remember { mutableStateOf(packArray?.get(16).toString()) }
+    val streetSideState = remember { mutableStateOf(packArray[16].toString()) }
 
     val s = remember { mutableStateOf("0") }
+
+    val changeTimeState = remember{ mutableStateOf(false)}
+    val changeIncrState = remember{ mutableStateOf(false)}
+
 
     DataRow("Имя устройства", deviceNameState)
     DataRow(text = "(10) Версия bt пакета", state = btVersionState)
@@ -87,6 +87,9 @@ fun StoplightPackage(pack: PackModel, viewModel: PacksViewModel, navController: 
     DataRow(text = "(26) Сторона улицы", state = streetSideState)
     DataRow(text = "(27-31) Резерв", state = s)
 
+    CheckBoxRow(text = "Менять время каждую 1 сек", state = changeTimeState)
+    CheckBoxRow(text = "Менять counterStatus каждую 1 сек", state = changeIncrState)
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -95,24 +98,21 @@ fun StoplightPackage(pack: PackModel, viewModel: PacksViewModel, navController: 
         Button(
             modifier = Modifier.fillMaxWidth(),
             onClick = {
-
                 pack.setArrayValues(
-                    btVersionState.value.toByte(),
+                    btVersionState.value.toInt(),
                     serialState.value.toInt(),
-                    transTypeState.value.toByte(),
-                    buzzersState.value.toByte(),
-                    incrementState.value.toByte(),
-                    timeState.value.toInt(),
+                    transTypeState.value.toInt(),
+                    buzzersState.value.toInt(),
+                    incrementState.value.toInt(),
+                    timeState.value.toLong(),
                     streetIdState.value.toInt(),
-                    streetSideState.value.toByte()
+                    streetSideState.value.toInt()
                 )
-
                 if(pack.id == null || pack.id == 0){
                     viewModel.saveNewPack(pack)
                 } else {
                     viewModel.updatePack(pack)
                 }
-
                 navController.popBackStack()
             }
         ) {
@@ -121,8 +121,56 @@ fun StoplightPackage(pack: PackModel, viewModel: PacksViewModel, navController: 
             )
         }
     }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp)
+        ) {
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = {
+                    pack.setArrayValues(
+                        btVersionState.value.toInt(),
+                        serialState.value.toInt(),
+                        transTypeState.value.toInt(),
+                        buzzersState.value.toInt(),
+                        incrementState.value.toInt(),
+                        timeState.value.toLong(),
+                        streetIdState.value.toInt(),
+                        streetSideState.value.toInt()
+                    )
+                    val byteArr = pack.pack
+                    byteArr?.let { it1 -> clickListener.startAdvertising(it1,
+                        changeTimeState.value,
+                        changeIncrState.value)}
+                }
+            ) {
+                Text(
+                    text = "Start advertising"
+                )
+            }
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp)
+        ) {
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = {
+                    clickListener.stopAdvertising()
+                }
+            ) {
+                Text(
+                    text = "Stop advertising"
+                )
+            }
+        }
+
 }
 }
+
+
 
 @Composable
 fun DataRow(text: String, state : MutableState<String>){
@@ -149,6 +197,30 @@ fun DataRow(text: String, state : MutableState<String>){
             value = state.value,
             onValueChange = { state.value = it },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+        )
+    }
+}
+
+@Composable
+fun CheckBoxRow(text: String, state: MutableState<Boolean>){
+    val lightGreen = Color(red = 0xAE, green = 0xD5, blue = 0x81, alpha = 0xFF)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 5.dp, start = 5.dp, end = 5.dp)
+            .background(Color.White)
+    ) {
+        Text(
+            modifier = Modifier
+                .width(300.dp)
+                .align(Alignment.CenterVertically)
+                .padding(start = 10.dp, top = 5.dp, bottom = 5.dp),
+            text = text
+        )
+        Checkbox(modifier = Modifier.fillMaxSize()
+            , colors = CheckboxDefaults.colors(checkedColor = lightGreen, checkmarkColor = Color.Black)
+            , checked = state.value
+            , onCheckedChange = {state.value = it}
         )
     }
 }

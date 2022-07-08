@@ -33,7 +33,6 @@ class PacksViewModel(private val repo: PackRepository): ViewModel() {
     }
 
     fun getPackById(id: Int){
-        var packageModel: PackModel
         viewModelScope.launch(Dispatchers.IO) {
             val packageEntity = repo.getPackById(id)
             val packModel = PackModel(packageEntity.id!!, packageEntity.name!!, packageEntity.pack!!)

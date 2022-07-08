@@ -10,4 +10,27 @@ data class PackageEntity(
     @ColumnInfo(name = "id") @PrimaryKey(autoGenerate = true) val id: Int? = null,
     @ColumnInfo(name = "name") val name: String?,
     @ColumnInfo(name = "pack") var pack: ByteArray?
-):Serializable
+):Serializable {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as PackageEntity
+
+        if (id != other.id) return false
+        if (name != other.name) return false
+        if (pack != null) {
+            if (other.pack == null) return false
+            if (!pack.contentEquals(other.pack)) return false
+        } else if (other.pack != null) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = id ?: 0
+        result = 31 * result + (name?.hashCode() ?: 0)
+        result = 31 * result + (pack?.contentHashCode() ?: 0)
+        return result
+    }
+}

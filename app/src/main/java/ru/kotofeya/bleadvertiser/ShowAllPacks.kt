@@ -1,6 +1,5 @@
 package ru.kotofeya.bleadvertiser
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -56,15 +55,13 @@ fun PackRow(packModel: PackModel, navController: NavController, viewModel: Packs
                     }
                 }
         ) {
-            packModel.name?.let {
-                Text(
-                    text = it,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(5.dp)
-                        .background(Color.LightGray),
-                )
-            }
+            Text(
+                text = packModel.name,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(5.dp)
+                    .background(Color.LightGray),
+            )
             Text(
                 text = Arrays.toString(packModel.pack),
                 modifier = Modifier
