@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import ru.kotofeya.bleadvertiser.ClickListener
 
 @Composable
@@ -42,6 +43,34 @@ fun DataRow(text: String, state : MutableState<String>){
             value = state.value,
             onValueChange = { state.value = it },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+        )
+    }
+}
+
+@Composable
+fun DataRowString(text: String, state : MutableState<String>){
+    val lightGreen = Color(red = 0xAE, green = 0xD5, blue = 0x81, alpha = 0xFF)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 5.dp, start = 5.dp, end = 5.dp)
+            .background(Color.White)
+    ) {
+        Text(
+            modifier = Modifier
+                .width(300.dp)
+                .align(Alignment.CenterVertically)
+                .padding(start = 10.dp, top = 5.dp, bottom = 5.dp),
+            text = text
+        )
+        BasicTextField(
+            modifier = Modifier
+                .fillMaxHeight()
+                .align(Alignment.CenterVertically)
+                .background(lightGreen)
+                .padding(5.dp),
+            value = state.value,
+            onValueChange = { state.value = it },
         )
     }
 }
@@ -127,6 +156,26 @@ fun SaveOrUpdateButton(setPackValues: () -> (Unit), saveOrUpdate: () -> (Unit)){
         ) {
             Text(
                 text = "Save and return"
+            )
+        }
+    }
+}
+
+@Composable
+fun ReturnButton(navController: NavController){
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(10.dp)
+    ) {
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = {
+                navController.popBackStack()
+            }
+        ) {
+            Text(
+                text = "Return"
             )
         }
     }

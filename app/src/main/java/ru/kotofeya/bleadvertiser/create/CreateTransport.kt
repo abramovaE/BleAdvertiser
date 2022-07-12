@@ -11,32 +11,27 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavController
-import ru.kotofeya.bleadvertiser.ui.theme.DataRow
-import ru.kotofeya.bleadvertiser.ui.theme.SaveOrUpdateButton
-import ru.kotofeya.bleadvertiser.ui.theme.StartAdvertisingButton
-import ru.kotofeya.bleadvertiser.ui.theme.StopAdvertisingButton
+import ru.kotofeya.bleadvertiser.ui.theme.*
 
 @Composable
-fun CreateStationary(navController: NavController,
+fun CreateTransport(navController: NavController,
                      viewModel: PacksViewModel,
                      clickListener: ClickListener) {
     val byteArray = ByteArray(22) { 0 }
     byteArray[0] = 1
-    byteArray[5] = 64
-    val pack = PackModel(null, "name",byteArray)
-
-    StationaryPackage(pack = pack,
+    byteArray[5] = -128
+    val pack = PackModel(null, "name", byteArray)
+    TransportPackage(pack = pack,
         viewModel = viewModel,
         navController = navController,
         clickListener = clickListener)
-
 }
 
 @Composable
-fun StationaryPackage(pack: PackModel,
-                     viewModel: PacksViewModel,
-                     navController: NavController,
-                     clickListener: ClickListener) {
+fun TransportPackage(pack: PackModel,
+                      viewModel: PacksViewModel,
+                      navController: NavController,
+                      clickListener: ClickListener) {
     Column(
         modifier = Modifier
             .background(Color.White)
@@ -63,24 +58,20 @@ fun StationaryPackage(pack: PackModel,
         val buzzersState = remember { mutableStateOf(packArray[6].toString()) }
         val incrementState = remember { mutableStateOf(packArray[7].toString()) }
 
-        val byte12 = packArray[12].toInt()
-        val byte13 = packArray[13].toInt()
-        val cityId = ((byte12 shl 8)) + (byte13)
-        val cityIdState = remember { mutableStateOf(cityId.toString()) }
+        val transportTypeState = remember { mutableStateOf(packArray[14].toString()) }
+        val litera3State = remember { mutableStateOf(packArray[15].toString()) }
 
-        val crc = getCRCFromByteArray(packArray)
-        val crcState = remember { mutableStateOf(crc.toString()) }
+        val byte16 = packArray[16].toInt()
+        val byte17 = packArray[17].toInt()
+        val route = ((byte16 shl 8)) + (byte17)
+        val routeState = remember { mutableStateOf(route.toString()) }
 
-        val byte14 = packArray[14].toInt()
-        val byte15 = packArray[15].toInt()
-        val stationaryType = ((byte14 shl 8)) + (byte15)
-        val stationaryTypeState = remember { mutableStateOf(stationaryType.toString()) }
-
-        val floorState = remember { mutableStateOf(packArray[16].toString()) }
+        val litera1State = remember { mutableStateOf(packArray[18].toString()) }
+        val litera2State = remember { mutableStateOf(packArray[19].toString()) }
 
         val s = remember { mutableStateOf("0") }
 
-        DataRow(text = "Название", state = packNameState)
+        DataRowString(text = "Название", state = packNameState)
         DataRow("Имя устройства", deviceNameState)
         DataRow(text = "(10) Версия bt пакета", state = btVersionState)
         DataRow(text = "(11) Резерв", state = s)
@@ -88,26 +79,30 @@ fun StationaryPackage(pack: PackModel,
         DataRow(text = "(15) Тип трансивера", state = transTypeState)
         DataRow(text = "(16) Состояние звуковых маяков", state = buzzersState)
         DataRow(text = "(17) Инкременты вызова", state = incrementState)
-        DataRow(text = "(18-21) CRC", state = crcState)
-        DataRow(text = "(22-23) Индекс города", state = cityIdState)
-        DataRow(text = "(24-25) Тип стационарного объекта", state = stationaryTypeState)
-        DataRow(text = "(26) Этаж", state = floorState)
-        DataRow(text = "(27-31) Резерв", state = s)
+        DataRow(text = "(18-23) Резерв", state = s)
+        DataRow(text = "(24) Тип транспортного средства", state = transportTypeState)
+        DataRow(text = "(25) Литера 3", state = litera3State)
+        DataRow(text = "(26-27) Номер маршрута", state = routeState)
+        DataRow(text = "(28) Литера 1", state = litera1State)
+        DataRow(text = "(29) Литера 2", state = litera2State)
+        DataRow(text = "(30-31) Резерв", state = s)
 
         fun setPackValues(){
             pack.setPackName(packNameState.value)
-            pack.setStationaryArrayValues(
+            pack.setTransportArrayValues(
                 btVersionState.value.toInt(),
                 serialState.value.toInt(),
                 transTypeState.value.toInt(),
                 buzzersState.value.toInt(),
                 incrementState.value.toInt(),
-                crcState.value.toLong(),
-                cityIdState.value.toInt(),
-                stationaryTypeState.value.toInt(),
-                floorState.value.toInt()
+                transportTypeState.value.toInt(),
+                litera3State.value.toInt(),
+                routeState.value.toInt(),
+                litera1State.value.toInt(),
+                litera2State.value.toInt()
             )
         }
+
         fun saveOrUpdate(){
             if(pack.id == null || pack.id == 0){
                 viewModel.saveNewPack(pack)
@@ -116,6 +111,7 @@ fun StationaryPackage(pack: PackModel,
             }
             navController.popBackStack()
         }
+
         fun startAdv(){
             val byteArr = pack.pack
             byteArr?.let { it1 -> clickListener.startAdvertising(it1,
@@ -124,9 +120,9 @@ fun StationaryPackage(pack: PackModel,
             )}
         }
 
-
         SaveOrUpdateButton(setPackValues = {setPackValues()}, saveOrUpdate = {saveOrUpdate()})
         StartAdvertisingButton(setPackValues = {setPackValues()}, startAdv = {startAdv()})
         StopAdvertisingButton(clickListener = clickListener)
+        ReturnButton(navController = navController)
     }
 }

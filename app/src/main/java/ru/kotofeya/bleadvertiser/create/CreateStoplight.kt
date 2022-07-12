@@ -76,7 +76,7 @@ fun StoplightPackage(pack: PackModel,
     val changeTimeState = remember{ mutableStateOf(false)}
     val changeIncrState = remember{ mutableStateOf(false)}
 
-
+    DataRowString(text = "Название", state = packNameState)
     DataRow("Имя устройства", deviceNameState)
     DataRow(text = "(10) Версия bt пакета", state = btVersionState)
     DataRow(text = "(11) Резерв", state = s)
@@ -126,5 +126,6 @@ fun StoplightPackage(pack: PackModel,
         SaveOrUpdateButton(setPackValues = { setPackValues()}, saveOrUpdate = { saveOrUpdate()})
         StartAdvertisingButton(setPackValues = {setPackValues()}, startAdv = {startAdv()})
         StopAdvertisingButton(clickListener = clickListener)
+        ReturnButton(navController = navController)
     }
 }

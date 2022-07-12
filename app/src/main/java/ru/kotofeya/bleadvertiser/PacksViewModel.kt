@@ -15,6 +15,13 @@ class PacksViewModel(private val repo: PackRepository): ViewModel() {
     val selectedPack: LiveData<PackModel> get() = _selectedPack
 
 
+    fun deletePack(packModel: PackModel){
+       viewModelScope.launch(Dispatchers.IO){
+           val packageEntity = PackageEntity(packModel.id, packModel.name, packModel.pack)
+           repo.deletePack(packageEntity)
+       }
+    }
+
     fun loadAllPacks(){
         viewModelScope.launch(Dispatchers.IO){
             val packsList = mutableListOf<PackModel>()
