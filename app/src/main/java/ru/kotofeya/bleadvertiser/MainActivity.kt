@@ -28,6 +28,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import ru.kotofeya.bleadvertiser.BuildConfig.VERSION_CODE
 import java.util.*
 
 
@@ -39,11 +40,8 @@ General:
 12-14: Объявление серийного номера трансивера (0 -  16 777 216)
 15: Тип трансивера: 20 - Триоль (УЗГС); 40 -Стационар; 80 - Транспорт
 
-
 Структура пакета:
 stationars:
-
-
 16: Объявление состояния звуковых маяков, по два бита слева направо 1, 2, 3, 4.
 17: Флаги нулевого звукового маяка(0 ВЗ), инкремента вызова
 18-21: CRC сумма - считывается из JSON файла расположенного в /var/www/html/data/text_files/*.json
@@ -53,7 +51,6 @@ stationars:
 27-31: Резервные байты
 
 transport:
-
 16: Объявление состояния звуковых маяков, по два бита слева направо 1, 2, 3, 4.
 17: Флаги - состояние дверей, направление движения, инкрементное число вызова (изменяется при каждом вызове, увеличиваясь на единицу)
 24: Тип транспортного средства (подробнее по ссылке).
@@ -64,7 +61,6 @@ transport:
 30-31: Резервные байты
 
 triol:
-
 16: Режим работы светофора:
 1) День, зеленый свет (Молчим)
 2) День, красный свет ("Название улицы")
@@ -111,9 +107,12 @@ class MainActivity : ComponentActivity(), ClickListener{
     private var advTimerList: MutableList<Timer> = mutableListOf()
 
     @RequiresApi(Build.VERSION_CODES.S)
-    private val permissions = arrayOf(
+    private val permissions_s = arrayOf(
         android.Manifest.permission.BLUETOOTH_ADVERTISE,
         android.Manifest.permission.BLUETOOTH_CONNECT)
+
+    private val permissions_r = arrayOf(
+        android.Manifest.permission.BLUETOOTH)
 
     private fun hasPermissions(context: Context,
                                vararg permissions: String): Boolean = permissions.all {
@@ -132,6 +131,15 @@ class MainActivity : ComponentActivity(), ClickListener{
         }
         btManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         btAdapter = btManager.adapter
+
+        var permissions = emptyArray<String>()
+        if(Build.VERSION.SDK_INT == Build.VERSION_CODES.S){
+            permissions = permissions_s
+        }
+        else {
+//            permissions = permissions_r
+        }
+
 
         hasPermissions = hasPermissions(this, permissions = permissions)
         if (!hasPermissions) {
@@ -176,7 +184,6 @@ class MainActivity : ComponentActivity(), ClickListener{
         }
 
         advSetCallBackList.add(advSetCallBack)
-
 
         btAdvertiser.startAdvertisingSet(
             params, advData,
@@ -227,6 +234,7 @@ class MainActivity : ComponentActivity(), ClickListener{
 
 
 interface ClickListener{
+
     fun startAdvertising(adv: ByteArray,
                          changeTime: Boolean,
                          changeCounterIncr: Boolean)
@@ -316,6 +324,10 @@ fun BtPackage(clickListener: ClickListener, viewModel: PacksViewModel) {
         composable("main"){ Main(clickListener = clickListener,
             navController = navController)}
         composable("createtriol"){CreateStoplight(
+            navController = navController, viewModel, clickListener = clickListener)}
+        composable("createstationary"){CreateStationary(
+            navController = navController, viewModel, clickListener = clickListener)}
+        composable("createtransport"){CreateTransport(
             navController = navController, viewModel, clickListener = clickListener)}
         composable("showallpacks"){ShowAllPacks(
             navController = navController, viewModel = viewModel)}

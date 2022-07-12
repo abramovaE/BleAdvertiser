@@ -23,9 +23,14 @@ import androidx.navigation.NavController
 
 
 @Composable
-fun CreateStoplight(navController: NavController, viewModel: PacksViewModel, clickListener: ClickListener) {
+fun CreateStoplight(navController: NavController,
+                    viewModel: PacksViewModel,
+                    clickListener: ClickListener) {
     val pack = PackModel(null, "name", ByteArray(22) { 0 })
-    StoplightPackage(pack = pack, viewModel = viewModel, navController = navController, clickListener = clickListener)
+    StoplightPackage(pack = pack,
+        viewModel = viewModel,
+        navController = navController,
+        clickListener = clickListener)
 }
 
 
@@ -98,7 +103,7 @@ fun StoplightPackage(pack: PackModel,
         Button(
             modifier = Modifier.fillMaxWidth(),
             onClick = {
-                pack.setArrayValues(
+                pack.setStoplightArrayValues(
                     btVersionState.value.toInt(),
                     serialState.value.toInt(),
                     transTypeState.value.toInt(),
@@ -129,7 +134,7 @@ fun StoplightPackage(pack: PackModel,
             Button(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
-                    pack.setArrayValues(
+                    pack.setStoplightArrayValues(
                         btVersionState.value.toInt(),
                         serialState.value.toInt(),
                         transTypeState.value.toInt(),
