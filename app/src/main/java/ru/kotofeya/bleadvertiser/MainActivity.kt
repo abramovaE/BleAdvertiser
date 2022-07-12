@@ -15,8 +15,9 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.*
-import androidx.compose.runtime.*
+import androidx.compose.material.Button
+import androidx.compose.material.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -28,7 +29,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import ru.kotofeya.bleadvertiser.BuildConfig.VERSION_CODE
 import java.util.*
 
 
@@ -219,14 +219,15 @@ class MainActivity : ComponentActivity(), ClickListener{
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun stopAdvertising(){
-        Log.d("TAG", "stopAdvertising()")
         if(isBleAdvInit) {
+            Log.d("TAG", "stopAdvertising()")
             advTimerList.forEach(::cancelTimer)
             advSetCallBackList.forEach(btAdvertiser::stopAdvertisingSet)
+            isBleAdvInit = false
         }
     }
 
-    fun cancelTimer(timer: Timer){
+    private fun cancelTimer(timer: Timer){
         timer.cancel()
     }
 }
@@ -254,44 +255,10 @@ fun Main(clickListener: ClickListener, navController: NavController){
                 enabled = true
             )
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(10.dp)
-        ) {
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = {
-                    val byteArr = ByteArray(22)
-                    clickListener.startAdvertising(byteArr,
-                        changeTime = false,
-                        changeCounterIncr = false
-                    )
-                }
-            ) {
-                Text(
-                    text = "Start advertising"
-                )
-            }
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(10.dp)
-        ) {
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = {
-                    clickListener.stopAdvertising()
-                }
-            ) {
-                Text(
-                    text = "Stop advertising"
-                )
-            }
-        }
         Btn(navController = navController, "showallpacks", "Show all packs")
         Btn(navController = navController, "createtriol", "Create new triol")
+        Btn(navController = navController, "createstationary", "Create new stationary")
+        Btn(navController = navController, "createtransport", "Create new transport")
     }
 }
 

@@ -3,21 +3,14 @@ package ru.kotofeya.bleadvertiser
 
 data class PackModel(
     val id: Int?,
-    val name: String,
+    var name: String,
     var pack: ByteArray?
 ) {
-    fun setTransportArrayValues(version: Int,
-                                 serial: Int,
-                                 transType: Int,
-                                 buzzer: Int,
-                                 increment: Int,
-                                 transportType: Int,
-                                 litera3: Int,
-                                 route: Int,
-                                 litera1: Int,
-                                 litera2: Int){
-        val byteArr = ByteArray(22) { 0 }
 
+    private fun initByteArr(version: Int,
+                    serial: Int,
+                    transType: Int) : ByteArray{
+        val byteArr = ByteArray(22) { 0 }
         byteArr[0] = version.toByte()
 
         val serial0 = (serial shr 16).toByte()
@@ -28,11 +21,29 @@ data class PackModel(
         byteArr[4] = serial2
 
         byteArr[5] = transType.toByte()
+        return byteArr
+    }
+
+    fun setPackName(packName: String){
+        name = packName;
+    }
+
+    fun setTransportArrayValues(version: Int,
+                                 serial: Int,
+                                 transType: Int,
+                                 buzzer: Int,
+                                 increment: Int,
+                                 transportType: Int,
+                                 litera3: Int,
+                                 route: Int,
+                                 litera1: Int,
+                                 litera2: Int){
+        val byteArr = initByteArr(version, serial, transType)
+
         byteArr[6] = buzzer.toByte()
         byteArr[7] = increment.toByte()
 
         byteArr[14] = transportType.toByte()
-
         byteArr[15] = litera3.toByte()
 
         val route0 = (route shr 8).toByte()
@@ -55,18 +66,8 @@ data class PackModel(
                                 cityId: Int,
                                 stationaryType: Int,
                                 floor: Int){
-        val byteArr = ByteArray(22) { 0 }
+        val byteArr = initByteArr(version, serial, transType)
 
-        byteArr[0] = version.toByte()
-
-        val serial0 = (serial shr 16).toByte()
-        val serial1 = (serial shr 8).toByte()
-        val serial2 = serial.toByte()
-        byteArr[2] = serial0
-        byteArr[3] = serial1
-        byteArr[4] = serial2
-
-        byteArr[5] = transType.toByte()
         byteArr[6] = buzzer.toByte()
         byteArr[7] = increment.toByte()
 
@@ -91,8 +92,6 @@ data class PackModel(
         pack = byteArr
     }
 
-
-
     fun setStoplightArrayValues(version: Int,
                                 serial: Int,
                                 transType: Int,
@@ -101,18 +100,8 @@ data class PackModel(
                                 time: Long,
                                 streetId: Int,
                                 streetSide: Int){
-        val byteArr = ByteArray(22) { 0 }
+        val byteArr = initByteArr(version, serial, transType)
 
-        byteArr[0] = version.toByte()
-
-        val serial0 = (serial shr 16).toByte()
-        val serial1 = (serial shr 8).toByte()
-        val serial2 = serial.toByte()
-        byteArr[2] = serial0
-        byteArr[3] = serial1
-        byteArr[4] = serial2
-
-        byteArr[5] = transType.toByte()
         byteArr[6] = buzzer.toByte()
         byteArr[7] = increment.toByte()
 
@@ -156,7 +145,7 @@ data class PackModel(
     }
 }
 
-fun getTimeFromByteArray(byteArray: ByteArray): Long {
+private fun get_8_11_FromByteArray(byteArray: ByteArray) : Long{
     val byte8 = byteArray[8].toLong()
     val byte9 = byteArray[9].toLong()
     val byte10 = byteArray[10].toLong()
@@ -164,28 +153,25 @@ fun getTimeFromByteArray(byteArray: ByteArray): Long {
     return ((byte8 and 0xFF) shl 24) or ((byte9 and 0xFF) shl 16) or ((byte10 and 0xFF) shl 8) or (byte11 and 0xFF)
 }
 
+fun getTimeFromByteArray(byteArray: ByteArray): Long {
+    return  get_8_11_FromByteArray(byteArray = byteArray)
+}
 
 fun getCRCFromByteArray(byteArray: ByteArray): Long {
-    val byte8 = byteArray[8].toLong()
-    val byte9 = byteArray[9].toLong()
-    val byte10 = byteArray[10].toLong()
-    val byte11 = byteArray[11].toLong()
-    return ((byte8 and 0xFF) shl 24) or ((byte9 and 0xFF) shl 16) or ((byte10 and 0xFF) shl 8) or (byte11 and 0xFF)
+    return  get_8_11_FromByteArray(byteArray = byteArray)
 }
 
+private fun getByteArrayFromLong(l: Long): ByteArray{
+    val l0 = (l shr 24).toByte()
+    val l1 = (l shr 16).toByte()
+    val l2 = (l shr 8).toByte()
+    val l3 = (l).toByte()
+    return byteArrayOf(l0, l1, l2, l3)
+}
 fun getByteArrayFromTime(time: Long): ByteArray{
-    val time0 = (time shr 24).toByte()
-    val time1 = (time shr 16).toByte()
-    val time2 = (time shr 8).toByte()
-    val time3 = (time).toByte()
-    return byteArrayOf(time0, time1, time2, time3)
+    return getByteArrayFromLong(time)
 }
 
 fun getByteArrayFromCRC(crc: Long): ByteArray{
-    val crc0 = (crc shr 24).toByte()
-    val crc1 = (crc shr 16).toByte()
-    val crc2 = (crc shr 8).toByte()
-    val crc3 = (crc).toByte()
-    return byteArrayOf(crc0, crc1, crc2, crc3)
+    return getByteArrayFromLong(crc)
 }
-

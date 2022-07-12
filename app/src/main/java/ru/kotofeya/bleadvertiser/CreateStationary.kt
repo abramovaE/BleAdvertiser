@@ -2,23 +2,29 @@ package ru.kotofeya.bleadvertiser
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Button
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import ru.kotofeya.bleadvertiser.ui.theme.DataRow
+import ru.kotofeya.bleadvertiser.ui.theme.SaveOrUpdateButton
+import ru.kotofeya.bleadvertiser.ui.theme.StartAdvertisingButton
+import ru.kotofeya.bleadvertiser.ui.theme.StopAdvertisingButton
 
 @Composable
 fun CreateStationary(navController: NavController,
                      viewModel: PacksViewModel,
                      clickListener: ClickListener) {
-    val pack = PackModel(null, "name", ByteArray(22) { 0 })
+    val byteArray = ByteArray(22) { 0 }
+    byteArray[0] = 1
+    byteArray[5] = 64
+    val pack = PackModel(null, "name",byteArray)
+
     StationaryPackage(pack = pack,
         viewModel = viewModel,
         navController = navController,
@@ -40,8 +46,10 @@ fun StationaryPackage(pack: PackModel,
                 enabled = true
             )
     ){
-        val packArray = pack.pack
+        val packName = pack.name
+        val packNameState = remember { mutableStateOf(packName) }
 
+        val packArray = pack.pack
         val deviceNameState = remember { mutableStateOf("stp") }
         val btVersionState = remember { mutableStateOf(packArray?.get(0).toString()) }
 
@@ -72,6 +80,7 @@ fun StationaryPackage(pack: PackModel,
 
         val s = remember { mutableStateOf("0") }
 
+        DataRow(text = "Название", state = packNameState)
         DataRow("Имя устройства", deviceNameState)
         DataRow(text = "(10) Версия bt пакета", state = btVersionState)
         DataRow(text = "(11) Резерв", state = s)
@@ -85,85 +94,39 @@ fun StationaryPackage(pack: PackModel,
         DataRow(text = "(26) Этаж", state = floorState)
         DataRow(text = "(27-31) Резерв", state = s)
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(10.dp)
-        ) {
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = {
-                    pack.setStationaryArrayValues(
-                        btVersionState.value.toInt(),
-                        serialState.value.toInt(),
-                        transTypeState.value.toInt(),
-                        buzzersState.value.toInt(),
-                        incrementState.value.toInt(),
-                        crcState.value.toLong(),
-                        cityIdState.value.toInt(),
-                        stationaryTypeState.value.toInt(),
-                        floorState.value.toInt()
-                    )
-                    if(pack.id == null || pack.id == 0){
-                        viewModel.saveNewPack(pack)
-                    } else {
-                        viewModel.updatePack(pack)
-                    }
-                    navController.popBackStack()
-                }
-            ) {
-                Text(
-                    text = "Save and return"
-                )
-            }
+        fun setPackValues(){
+            pack.setPackName(packNameState.value)
+            pack.setStationaryArrayValues(
+                btVersionState.value.toInt(),
+                serialState.value.toInt(),
+                transTypeState.value.toInt(),
+                buzzersState.value.toInt(),
+                incrementState.value.toInt(),
+                crcState.value.toLong(),
+                cityIdState.value.toInt(),
+                stationaryTypeState.value.toInt(),
+                floorState.value.toInt()
+            )
         }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(10.dp)
-        ) {
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = {
-                    pack.setStationaryArrayValues(
-                        btVersionState.value.toInt(),
-                        serialState.value.toInt(),
-                        transTypeState.value.toInt(),
-                        buzzersState.value.toInt(),
-                        incrementState.value.toInt(),
-                        crcState.value.toLong(),
-                        cityIdState.value.toInt(),
-                        stationaryTypeState.value.toInt(),
-                        floorState.value.toInt()
-                    )
-                    val byteArr = pack.pack
-                    byteArr?.let { it1 -> clickListener.startAdvertising(it1,
-                        changeTime = false,
-                        changeCounterIncr = false
-                    )}
-                }
-            ) {
-                Text(
-                    text = "Start advertising"
-                )
+        fun saveOrUpdate(){
+            if(pack.id == null || pack.id == 0){
+                viewModel.saveNewPack(pack)
+            } else {
+                viewModel.updatePack(pack)
             }
+            navController.popBackStack()
         }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(10.dp)
-        ) {
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = {
-                    clickListener.stopAdvertising()
-                }
-            ) {
-                Text(
-                    text = "Stop advertising"
-                )
-            }
+        fun startAdv(){
+            val byteArr = pack.pack
+            byteArr?.let { it1 -> clickListener.startAdvertising(it1,
+                changeTime = false,
+                changeCounterIncr = false
+            )}
         }
 
+
+        SaveOrUpdateButton(setPackValues = {setPackValues()}, saveOrUpdate = {saveOrUpdate()})
+        StartAdvertisingButton(setPackValues = {setPackValues()}, startAdv = {startAdv()})
+        StopAdvertisingButton(clickListener = clickListener)
     }
 }
