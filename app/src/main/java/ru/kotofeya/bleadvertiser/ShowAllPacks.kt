@@ -10,39 +10,42 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.LiveData
 import androidx.navigation.NavController
 import java.util.*
 
 @Composable
 fun ShowAllPacks(navController: NavController, viewModel: PacksViewModel) {
-    viewModel.loadAllPacks()
 
-    var list = viewModel.packsList.value
-    if(list == null){
-        list = emptyList()
+    var state = remember{
+        mutableStateOf(viewModel.packsList.value)
     }
+
 
 
     LazyColumn(
         modifier = Modifier.fillMaxSize()
     ) {
-        itemsIndexed(
-            list
-        ) { _, item ->
-            PackRow(packModel = item, navController, viewModel)
+        itemsIndexed(items = state.value!!) { index, item ->
+            PackRow(packModel = item, navController, viewModel, state)
         }
     }
 }
 
 
 @Composable
-fun PackRow(packModel: PackModel, navController: NavController, viewModel: PacksViewModel){
+fun PackRow(
+    packModel: PackModel,
+    navController: NavController,
+    viewModel: PacksViewModel,
+    state: MutableState<List<PackModel>?>
+){
     Row(modifier = Modifier
         .fillMaxSize()) {
         Column(
@@ -58,23 +61,31 @@ fun PackRow(packModel: PackModel, navController: NavController, viewModel: Packs
 //                }
 
                 .pointerInput(Unit) {
-                detectTapGestures(
-                    onPress = { /* Called when the gesture starts */ },
-                    onDoubleTap = { /* Called on Double Tap */ },
-                    onLongPress = {
-                        Log.d("TAG", "onLongPress")
-                        viewModel.deletePack(packModel)
+                    detectTapGestures(
+                        onPress = { /* Called when the gesture starts */ },
+                        onDoubleTap = {
+                            Log.d("TAG", "onLongPress, id: ${packModel.id}")
+                            viewModel.deletePack(packModel)
+                            Log.d("TAG", "onLongPress, state1: ${state.value}")
+                            var list = (state.value)?.filter { it.id != packModel.id }
 
-//                        viewModel.loadAllPacks()
-                    },
-                    onTap = {
-                        packModel.id?.let {
-                            viewModel.getPackById(it)
-                            navController.navigate("showpack/${packModel.id}")
+                            state.value = list
+
+
+                            Log.d("TAG", "onLongPress, state2: ${state.value}")
+                        },
+                        onLongPress = {
+
+                        },
+                        onTap = {
+                            packModel.id?.let {
+                                viewModel.getPackById(it)
+                                navController.navigate("showpack/${packModel.id}")
+                            }
                         }
-                    }
-                )
-            }
+                    )
+
+                }
 
 
         ) {

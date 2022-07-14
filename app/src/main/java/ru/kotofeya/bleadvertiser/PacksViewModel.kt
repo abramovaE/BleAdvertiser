@@ -1,6 +1,9 @@
 package ru.kotofeya.bleadvertiser
 
 import android.content.Context
+import android.os.Build
+import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -19,6 +22,7 @@ class PacksViewModel(private val repo: PackRepository): ViewModel() {
        viewModelScope.launch(Dispatchers.IO){
            val packageEntity = PackageEntity(packModel.id, packModel.name, packModel.pack)
            repo.deletePack(packageEntity)
+           _packsList.postValue(_packsList.value?.filter { it.id != packModel.id })
        }
     }
 
@@ -36,6 +40,13 @@ class PacksViewModel(private val repo: PackRepository): ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             val packageEntity = PackageEntity(packModel.id, packModel.name, packModel.pack)
             repo.insertPack(packageEntity)
+            Log.d("TAG", "insert: ${packModel.id}")
+
+            val packsList = mutableListOf<PackModel>()
+            for(packEntity in repo.getPacks()){
+                packsList.add(PackModel(packEntity.id!!, packEntity.name!!, packEntity.pack!!))
+            }
+            _packsList.postValue(packsList)
         }
     }
 

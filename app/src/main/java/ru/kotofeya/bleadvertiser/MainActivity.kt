@@ -125,6 +125,7 @@ class MainActivity : ComponentActivity(), ClickListener{
 
         packsViewModel = ViewModelProvider((this), PacksViewModel.Factory(this))
             .get(PacksViewModel::class.java)
+        packsViewModel.loadAllPacks()
 
         setContent {
             BtPackage(this, packsViewModel)
@@ -296,7 +297,9 @@ fun BtPackage(clickListener: ClickListener, viewModel: PacksViewModel) {
             navController = navController, viewModel, clickListener = clickListener)}
         composable("createtransport"){CreateTransport(
             navController = navController, viewModel, clickListener = clickListener)}
-        composable("showallpacks"){ShowAllPacks(
+        composable("showallpacks"){
+            viewModel.loadAllPacks()
+            ShowAllPacks(
             navController = navController, viewModel = viewModel)}
         composable("showpack/{packId}",
             arguments = listOf(navArgument("packId"){type = NavType.IntType})){
