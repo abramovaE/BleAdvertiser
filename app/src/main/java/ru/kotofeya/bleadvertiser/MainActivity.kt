@@ -305,9 +305,7 @@ fun BtPackage(clickListener: ClickListener, viewModel: PacksViewModel) {
                 )
         }
 
-        composable("show/{transType}",
-            arguments = listOf(navArgument("transType"){type = NavType.IntType})){
-                backStackEntry ->
+        composable("show"){
             ShowPack(
                 navController = navController,
                 viewModel = viewModel,

@@ -72,8 +72,8 @@ fun PackRow(
 
                         },
                         onTap = {
-                            packModel.uid?.let { it1 -> viewModel.getPackById(it1) }
-                            navController.navigate("show/${packModel.uid}")
+                            packModel.uid?.let { it1 -> viewModel.setSelectedPackById(it1) }
+                            navController.navigate("show")
                         }
                     )
                 }
