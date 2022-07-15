@@ -15,8 +15,7 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Button
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,6 +28,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import ru.kotofeya.bleadvertiser.create.CreateNew
 import java.util.*
 
 
@@ -106,6 +106,8 @@ class MainActivity : ComponentActivity(), ClickListener{
     private var advSetCallBackList: MutableList<AdvertisingSetCallback> = mutableListOf()
     private var advTimerList: MutableList<Timer> = mutableListOf()
 
+
+
     @RequiresApi(Build.VERSION_CODES.S)
     private val permissions_s = arrayOf(
         android.Manifest.permission.BLUETOOTH_ADVERTISE,
@@ -137,10 +139,6 @@ class MainActivity : ComponentActivity(), ClickListener{
         if(Build.VERSION.SDK_INT == Build.VERSION_CODES.S){
             permissions = permissions_s
         }
-        else {
-//            permissions = permissions_r
-        }
-
 
         hasPermissions = hasPermissions(this, permissions = permissions)
         if (!hasPermissions) {
@@ -236,7 +234,6 @@ class MainActivity : ComponentActivity(), ClickListener{
 
 
 interface ClickListener{
-
     fun startAdvertising(adv: ByteArray,
                          changeTime: Boolean,
                          changeCounterIncr: Boolean)
@@ -246,7 +243,7 @@ interface ClickListener{
 
 
 @Composable
-fun Main(clickListener: ClickListener, navController: NavController){
+fun Main(navController: NavController){
     Column(
         modifier = Modifier
             .background(Color.White)
@@ -257,9 +254,9 @@ fun Main(clickListener: ClickListener, navController: NavController){
             )
     ) {
         Btn(navController = navController, "showallpacks", "Show all packs")
-        Btn(navController = navController, "createtriol", "Create new triol")
-        Btn(navController = navController, "createstationary", "Create new stationary")
-        Btn(navController = navController, "createtransport", "Create new transport")
+        Btn(navController = navController, "create/${32}", "Create new triol")
+        Btn(navController = navController, "create/${64}", "Create new stationary")
+        Btn(navController = navController, "create/${-128}", "Create new transport")
     }
 }
 
@@ -267,6 +264,7 @@ fun Main(clickListener: ClickListener, navController: NavController){
 
 @Composable
 fun Btn(navController: NavController, route: String, btnText: String){
+    val green = Color(red = 0x4D, green = 0xB6, blue = 0xAC, alpha = 0xFF)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -274,12 +272,14 @@ fun Btn(navController: NavController, route: String, btnText: String){
     ) {
         Button(
             modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(backgroundColor = green),
             onClick = {
                 navController.navigate(route)
             }
         ) {
             Text(
-                text = btnText
+                text = btnText,
+                color = Color.White
             )
         }
     }
@@ -289,22 +289,30 @@ fun Btn(navController: NavController, route: String, btnText: String){
 fun BtPackage(clickListener: ClickListener, viewModel: PacksViewModel) {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = "main"){
-        composable("main"){ Main(clickListener = clickListener,
-            navController = navController)}
-        composable("createtriol"){CreateStoplight(
-            navController = navController, viewModel, clickListener = clickListener)}
-        composable("createstationary"){CreateStationary(
-            navController = navController, viewModel, clickListener = clickListener)}
-        composable("createtransport"){CreateTransport(
-            navController = navController, viewModel, clickListener = clickListener)}
+        composable("main"){ Main(navController = navController)}
+
         composable("showallpacks"){
             ShowAllPacks(navController = navController, viewModel = viewModel)}
-        composable("showpack/{packId}",
-            arguments = listOf(navArgument("packId"){type = NavType.IntType})){
-        ShowStoplight(
-            navController = navController,
-            viewModel = viewModel,
-            clickListener = clickListener
-        )}
+
+        composable("create/{transType}",
+            arguments = listOf(navArgument("transType"){type = NavType.IntType})){
+                backStackEntry ->
+                CreateNew(
+                    navController = navController,
+                    viewModel = viewModel,
+                    clickListener = clickListener,
+                    backStackEntry.arguments?.getInt("transType")!!
+                )
+        }
+
+        composable("show/{transType}",
+            arguments = listOf(navArgument("transType"){type = NavType.IntType})){
+                backStackEntry ->
+            ShowPack(
+                navController = navController,
+                viewModel = viewModel,
+                clickListener = clickListener
+            )
+        }
     }
 }

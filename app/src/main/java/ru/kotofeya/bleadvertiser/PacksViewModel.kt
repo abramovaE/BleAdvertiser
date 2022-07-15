@@ -15,28 +15,11 @@ class PacksViewModel(private val repo: PackRepository): ViewModel() {
     private val _selectedPack = MutableLiveData<PackModel>()
     val selectedPack: LiveData<PackModel> get() = _selectedPack
 
-//    fun deleteAndUpdate(packModel: PackModel) {
-//        viewModelScope.launch(Dispatchers.IO){
-//            val packageEntity = PackageEntity(packModel.uid, packModel.name, packModel.pack)
-//            repo.deletePack(packageEntity)
-//            Log.d("TAG", "deletePack(): ${packModel}")
-//
-//            val packsList = mutableListOf<PackModel>()
-//            for(packEntity in repo.getPacks()){
-//                packsList.add(PackModel(packEntity.uid!!, packEntity.name!!, packEntity.pack!!))
-//            }
-//            _packsList.postValue(packsList)
-//            Log.d("TAG", "loadAllPacks(): ${packsList}")
-//        }
-//    }
 
     fun deletePack(uid: Int){
-        Log.d("TAG", "deletePack ${uid}")
+        Log.d("TAG", "deletePack $uid")
        viewModelScope.launch(Dispatchers.IO){
            repo.deletePackById(uid = uid)
-//           val packageEntity = PackageEntity(packModel.uid, packModel.name, packModel.pack)
-//           repo.deletePack(packageEntity)
-//           Log.d("TAG", "deletePack(): ${packModel}")
        }
     }
 
@@ -47,10 +30,8 @@ class PacksViewModel(private val repo: PackRepository): ViewModel() {
                 packsList.add(PackModel(packEntity.uid!!, packEntity.name!!, packEntity.pack!!))
             }
             _packsList.postValue(packsList)
-            Log.d("TAG", "loadAllPacks(): ${packsList}")
-
+            Log.d("TAG", "loadAllPacks(): $packsList")
         }
-
     }
 
     fun saveNewPack(packModel: PackModel){
@@ -62,13 +43,11 @@ class PacksViewModel(private val repo: PackRepository): ViewModel() {
     }
 
     fun getPackById(id: Int){
-        if(id != null) {
-            viewModelScope.launch(Dispatchers.IO) {
-                val packageEntity = repo.getPackById(id)
-                val packModel =
-                    PackModel(packageEntity.uid!!, packageEntity.name!!, packageEntity.pack!!)
-                _selectedPack.postValue(packModel)
-            }
+        viewModelScope.launch(Dispatchers.IO) {
+            val packageEntity = repo.getPackById(id)
+            val packModel =
+                PackModel(packageEntity.uid!!, packageEntity.name!!, packageEntity.pack!!)
+            _selectedPack.postValue(packModel)
         }
     }
 

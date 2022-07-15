@@ -1,4 +1,4 @@
-package ru.kotofeya.bleadvertiser
+package ru.kotofeya.bleadvertiser.create
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
@@ -11,30 +11,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavController
-import ru.kotofeya.bleadvertiser.ui.theme.*
-
-
-@Composable
-fun CreateStoplight(navController: NavController,
-                    viewModel: PacksViewModel,
-                    clickListener: ClickListener) {
-    val byteArray = ByteArray(22) { 0 }
-    byteArray[0] = 1
-    byteArray[5] = 32
-    val pack = PackModel(null, "name",byteArray)
-
-    StoplightPackage(pack = pack,
-        viewModel = viewModel,
-        navController = navController,
-        clickListener = clickListener)
-}
-
+import ru.kotofeya.bleadvertiser.ClickListener
+import ru.kotofeya.bleadvertiser.PackModel
+import ru.kotofeya.bleadvertiser.PacksViewModel
+import ru.kotofeya.bleadvertiser.getTimeFromByteArray
 
 @Composable
 fun StoplightPackage(pack: PackModel,
                      viewModel: PacksViewModel,
                      navController: NavController,
-                     clickListener: ClickListener) {
+                     clickListener: ClickListener
+) {
     Column(
         modifier = Modifier
             .background(Color.White)

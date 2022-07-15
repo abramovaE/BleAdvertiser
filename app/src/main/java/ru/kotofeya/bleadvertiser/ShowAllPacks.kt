@@ -1,6 +1,5 @@
 package ru.kotofeya.bleadvertiser
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Column
@@ -25,32 +24,25 @@ fun ShowAllPacks(navController: NavController, viewModel: PacksViewModel) {
 
     viewModel.loadAllPacks()
 
-    var state = remember{
+    val state = remember{
         mutableStateListOf<PackModel>()
     }
 
     viewModel.loadAllPacks()
-    var list = viewModel.packsList.value
+    val list = viewModel.packsList.value
     state.clear()
     list?.let { state.addAll(it) }
-
 
     LazyColumn(
         modifier = Modifier.fillMaxSize()
     ) {
-
-        Log.d("TAG", "LazyColumn(), state: ${state.size}")
-
         itemsIndexed(
             items = state,
-            key = {
-                index, item ->
+            key = { _, item ->
                 item.uid!!
-            })
-        { index, item ->
-            PackRow(packModel = item, navController, viewModel, state, index, item.uid!!)
+            }) { _, item ->
+            PackRow(packModel = item, navController, viewModel, state)
         }
-
     }
 }
 
@@ -60,10 +52,7 @@ fun PackRow(
     packModel: PackModel,
     navController: NavController,
     viewModel: PacksViewModel,
-    state: SnapshotStateList<PackModel>,
-    index: Int,
-    uid: Int
-){
+    state: SnapshotStateList<PackModel>){
     Row(modifier = Modifier
         .fillMaxSize()) {
         Column(
@@ -76,25 +65,18 @@ fun PackRow(
                     detectTapGestures(
                         onPress = { /* Called when the gesture starts */ },
                         onDoubleTap = {
-                            Log.d("TAG", "onLongPress, id: ${uid}")
-                            viewModel.deletePack(uid)
-//                            viewModel.loadAllPacks()
+                            packModel.uid?.let { it1 -> viewModel.deletePack(it1) }
                             state.remove(packModel)
                         },
                         onLongPress = {
 
                         },
                         onTap = {
-                            packModel.uid?.let {
-                                viewModel.getPackById(it)
-                                navController.navigate("showpack/${packModel.uid}")
-                            }
+                            packModel.uid?.let { it1 -> viewModel.getPackById(it1) }
+                            navController.navigate("show/${packModel.uid}")
                         }
                     )
-
                 }
-
-
         ) {
             Text(
                 text = packModel.uid.toString(),

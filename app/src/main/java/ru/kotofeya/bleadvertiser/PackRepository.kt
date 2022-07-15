@@ -17,7 +17,6 @@ class PackRepository(private val packageDao: PackageDao) {
         packageDao.deletePackById(uid)
     }
 
-
     suspend fun insertPack(packageEntity: PackageEntity) = withContext(Dispatchers.IO){
         packageDao.insertPack(packageEntity = packageEntity)
     }

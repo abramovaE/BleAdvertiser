@@ -7,6 +7,10 @@ data class PackModel(
     var pack: ByteArray?
 ) {
 
+    fun getTransType(): Byte? {
+        return pack?.get(5)
+    }
+
     private fun initByteArr(version: Int,
                     serial: Int,
                     transType: Int) : ByteArray{
@@ -25,7 +29,7 @@ data class PackModel(
     }
 
     fun setPackName(packName: String){
-        name = packName;
+        name = packName
     }
 
     fun setTransportArrayValues(version: Int,
@@ -144,6 +148,8 @@ data class PackModel(
         return result
     }
 }
+
+
 
 private fun get_8_11_FromByteArray(byteArray: ByteArray) : Long{
     val byte8 = byteArray[8].toLong()
