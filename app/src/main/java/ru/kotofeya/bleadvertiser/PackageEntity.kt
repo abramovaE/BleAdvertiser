@@ -7,7 +7,7 @@ import java.io.Serializable
 
 @Entity(tableName = "package_entity")
 data class PackageEntity(
-    @ColumnInfo(name = "id") @PrimaryKey(autoGenerate = true) val id: Int? = null,
+    @ColumnInfo(name = "uid") @PrimaryKey(autoGenerate = true) val uid: Int? = null,
     @ColumnInfo(name = "name") val name: String?,
     @ColumnInfo(name = "pack") var pack: ByteArray?
 ):Serializable {
@@ -17,7 +17,7 @@ data class PackageEntity(
 
         other as PackageEntity
 
-        if (id != other.id) return false
+        if (uid != other.uid) return false
         if (name != other.name) return false
         if (pack != null) {
             if (other.pack == null) return false
@@ -28,7 +28,7 @@ data class PackageEntity(
     }
 
     override fun hashCode(): Int {
-        var result = id ?: 0
+        var result = uid ?: 0
         result = 31 * result + (name?.hashCode() ?: 0)
         result = 31 * result + (pack?.contentHashCode() ?: 0)
         return result

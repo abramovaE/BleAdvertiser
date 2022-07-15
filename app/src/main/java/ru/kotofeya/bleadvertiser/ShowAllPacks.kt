@@ -11,30 +11,46 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.LiveData
 import androidx.navigation.NavController
 import java.util.*
 
 @Composable
 fun ShowAllPacks(navController: NavController, viewModel: PacksViewModel) {
 
+    viewModel.loadAllPacks()
+
     var state = remember{
-        mutableStateOf(viewModel.packsList.value)
+        mutableStateListOf<PackModel>()
     }
 
+    viewModel.loadAllPacks()
+    var list = viewModel.packsList.value
+    state.clear()
+    list?.let { state.addAll(it) }
 
 
     LazyColumn(
         modifier = Modifier.fillMaxSize()
     ) {
-        itemsIndexed(items = state.value!!) { index, item ->
-            PackRow(packModel = item, navController, viewModel, state)
+
+        Log.d("TAG", "LazyColumn(), state: ${state.size}")
+
+        itemsIndexed(
+            items = state,
+            key = {
+                index, item ->
+                item.uid!!
+            })
+        { index, item ->
+            PackRow(packModel = item, navController, viewModel, state, index, item.uid!!)
         }
+
     }
 }
 
@@ -44,7 +60,9 @@ fun PackRow(
     packModel: PackModel,
     navController: NavController,
     viewModel: PacksViewModel,
-    state: MutableState<List<PackModel>?>
+    state: SnapshotStateList<PackModel>,
+    index: Int,
+    uid: Int
 ){
     Row(modifier = Modifier
         .fillMaxSize()) {
@@ -53,34 +71,23 @@ fun PackRow(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(5.dp)
-//                .clickable {
-//                    packModel.id?.let {
-//                        viewModel.getPackById(it)
-//                        navController.navigate("showpack/${packModel.id}")
-//                    }
-//                }
 
                 .pointerInput(Unit) {
                     detectTapGestures(
                         onPress = { /* Called when the gesture starts */ },
                         onDoubleTap = {
-                            Log.d("TAG", "onLongPress, id: ${packModel.id}")
-                            viewModel.deletePack(packModel)
-                            Log.d("TAG", "onLongPress, state1: ${state.value}")
-                            var list = (state.value)?.filter { it.id != packModel.id }
-
-                            state.value = list
-
-
-                            Log.d("TAG", "onLongPress, state2: ${state.value}")
+                            Log.d("TAG", "onLongPress, id: ${uid}")
+                            viewModel.deletePack(uid)
+//                            viewModel.loadAllPacks()
+                            state.remove(packModel)
                         },
                         onLongPress = {
 
                         },
                         onTap = {
-                            packModel.id?.let {
+                            packModel.uid?.let {
                                 viewModel.getPackById(it)
-                                navController.navigate("showpack/${packModel.id}")
+                                navController.navigate("showpack/${packModel.uid}")
                             }
                         }
                     )
@@ -90,7 +97,7 @@ fun PackRow(
 
         ) {
             Text(
-                text = packModel.name,
+                text = packModel.uid.toString(),
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(5.dp)

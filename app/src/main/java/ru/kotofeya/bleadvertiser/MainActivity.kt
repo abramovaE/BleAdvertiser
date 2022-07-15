@@ -298,9 +298,7 @@ fun BtPackage(clickListener: ClickListener, viewModel: PacksViewModel) {
         composable("createtransport"){CreateTransport(
             navController = navController, viewModel, clickListener = clickListener)}
         composable("showallpacks"){
-            viewModel.loadAllPacks()
-            ShowAllPacks(
-            navController = navController, viewModel = viewModel)}
+            ShowAllPacks(navController = navController, viewModel = viewModel)}
         composable("showpack/{packId}",
             arguments = listOf(navArgument("packId"){type = NavType.IntType})){
         ShowStoplight(

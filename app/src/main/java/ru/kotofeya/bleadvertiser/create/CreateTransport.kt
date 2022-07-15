@@ -104,7 +104,7 @@ fun TransportPackage(pack: PackModel,
         }
 
         fun saveOrUpdate(){
-            if(pack.id == null || pack.id == 0){
+            if(pack.uid == null || pack.uid == 0){
                 viewModel.saveNewPack(pack)
             } else {
                 viewModel.updatePack(pack)

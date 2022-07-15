@@ -2,7 +2,7 @@ package ru.kotofeya.bleadvertiser
 
 
 data class PackModel(
-    val id: Int?,
+    val uid: Int?,
     var name: String,
     var pack: ByteArray?
 ) {
@@ -127,7 +127,7 @@ data class PackModel(
 
         other as PackModel
 
-        if (id != other.id) return false
+        if (uid != other.uid) return false
         if (name != other.name) return false
         if (pack != null) {
             if (other.pack == null) return false
@@ -138,7 +138,7 @@ data class PackModel(
     }
 
     override fun hashCode(): Int {
-        var result = id ?: 0
+        var result = uid ?: 0
         result = 31 * result + name.hashCode()
         result = 31 * result + (pack?.contentHashCode() ?: 0)
         return result

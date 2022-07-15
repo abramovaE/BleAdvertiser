@@ -13,6 +13,10 @@ class PackRepository(private val packageDao: PackageDao) {
         packageDao.deletePack(packageEntity = packageEntity)
     }
 
+    suspend fun deletePackById(uid: Int) = withContext(Dispatchers.IO){
+        packageDao.deletePackById(uid)
+    }
+
 
     suspend fun insertPack(packageEntity: PackageEntity) = withContext(Dispatchers.IO){
         packageDao.insertPack(packageEntity = packageEntity)
