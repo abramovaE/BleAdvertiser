@@ -1,5 +1,6 @@
 package ru.kotofeya.bleadvertiser
 
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.*
@@ -110,15 +111,14 @@ class MainActivity : ComponentActivity(), ClickListener{
 
     @RequiresApi(Build.VERSION_CODES.S)
     private val permissions_s = arrayOf(
-        android.Manifest.permission.BLUETOOTH_ADVERTISE,
-        android.Manifest.permission.BLUETOOTH_CONNECT)
-
-    private val permissions_r = arrayOf(
-        android.Manifest.permission.BLUETOOTH)
+        android.Manifest.permission.BLUETOOTH_SCAN,
+        android.Manifest.permission.BLUETOOTH_CONNECT,
+        android.Manifest.permission.BLUETOOTH_ADVERTISE)
 
     private fun hasPermissions(context: Context,
-                               vararg permissions: String): Boolean = permissions.all {
-        ActivityCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+                               vararg permissions: String):
+        Boolean = permissions.all {
+        ActivityCompat.checkSelfPermission(context, it)== PackageManager.PERMISSION_GRANTED
     }
 
     @RequiresApi(Build.VERSION_CODES.S)
@@ -136,7 +136,7 @@ class MainActivity : ComponentActivity(), ClickListener{
         btAdapter = btManager.adapter
 
         var permissions = emptyArray<String>()
-        if(Build.VERSION.SDK_INT == Build.VERSION_CODES.S){
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S){
             permissions = permissions_s
         }
 
@@ -154,64 +154,71 @@ class MainActivity : ComponentActivity(), ClickListener{
             .build()
     }
 
+    @SuppressLint("MissingPermission")
     @RequiresApi(Build.VERSION_CODES.O)
     override fun startAdvertising(adv: ByteArray,
                                   changeTime: Boolean,
                                   changeCounterIncr: Boolean) {
-        Log.d("TAG", "startAdvertising(): $adv")
-        startAdvTime = System.currentTimeMillis()
-        btAdapter.name = "stp"
-        btAdvertiser = btAdapter.bluetoothLeAdvertiser
-        isBleAdvInit = true
-        val advData = getAdvertiseData(adv)
-        var currentAdvSet: AdvertisingSet? = null
+        Log.d("TAG", "startAdvertising(): ${adv.contentToString()}")
 
-        val params = AdvertisingSetParameters.Builder()
-            .setLegacyMode(true)
-            .setConnectable(false)
-            .build()
 
-        val advSetCallBack = object : AdvertisingSetCallback() {
-            override fun onAdvertisingSetStarted(
-                advertisingSet: AdvertisingSet?,
-                txPower: Int,
-                status: Int
-            ) {
-                Log.d("TAG", "onAdvSetStarted()")
-                currentAdvSet = advertisingSet
-            }
-        }
+        if(hasPermissions) {
 
-        advSetCallBackList.add(advSetCallBack)
+            startAdvTime = System.currentTimeMillis()
+            btAdapter.name = "stp"
+            btAdvertiser = btAdapter.bluetoothLeAdvertiser
+            isBleAdvInit = true
+            val advData = getAdvertiseData(adv)
+            var currentAdvSet: AdvertisingSet? = null
 
-        btAdvertiser.startAdvertisingSet(
-            params, advData,
-            null, null, null, advSetCallBack
-        )
+            val params = AdvertisingSetParameters.Builder()
+                .setLegacyMode(true)
+                .setConnectable(false)
+                .build()
 
-        if (changeTime || changeCounterIncr) {
-            var advTimer = Timer()
-            advTimerList.add(advTimer)
-            advTimer?.schedule(object : TimerTask() {
-                override fun run() {
-                    if(changeTime) {
-                        val time = getTimeFromByteArray(adv) + 1000L
-                        val timeArray = getByteArrayFromTime(time = time)
-                        Log.d("TAG", "time: $time")
-                        adv[8] = timeArray[0]
-                        adv[9] = timeArray[1]
-                        adv[10] = timeArray[2]
-                        adv[11] = timeArray[3]
-                    }
-
-                    if(changeCounterIncr){
-                        adv[7] = adv[7].inc()
-                        Log.d("TAG", "increment: ${adv[7]}")
-                    }
-                    val newAdvData = getAdvertiseData(adv)
-                    currentAdvSet?.setAdvertisingData(newAdvData)
+            val advSetCallBack = object : AdvertisingSetCallback() {
+                override fun onAdvertisingSetStarted(
+                    advertisingSet: AdvertisingSet?,
+                    txPower: Int,
+                    status: Int
+                ) {
+                    Log.d("TAG", "onAdvSetStarted()")
+                    currentAdvSet = advertisingSet
                 }
-            }, 0, 1000)
+            }
+
+            advSetCallBackList.add(advSetCallBack)
+
+            btAdvertiser.startAdvertisingSet(
+                params, advData,
+                null, null,
+                null, advSetCallBack
+            )
+
+            if (changeTime || changeCounterIncr) {
+                val advTimer = Timer()
+                advTimerList.add(advTimer)
+                advTimer.schedule(object : TimerTask() {
+                    override fun run() {
+                        if (changeTime) {
+                            val time = getTimeFromByteArray(adv) + 1000L
+                            val timeArray = getByteArrayFromTime(time = time)
+                            Log.d("TAG", "time: $time")
+                            adv[8] = timeArray[0]
+                            adv[9] = timeArray[1]
+                            adv[10] = timeArray[2]
+                            adv[11] = timeArray[3]
+                        }
+
+                        if (changeCounterIncr) {
+                            adv[7] = adv[7].inc()
+                            Log.d("TAG", "increment: ${adv[7]}")
+                        }
+                        val newAdvData = getAdvertiseData(adv)
+                        currentAdvSet?.setAdvertisingData(newAdvData)
+                    }
+                }, 0, 1000)
+            }
         }
     }
 

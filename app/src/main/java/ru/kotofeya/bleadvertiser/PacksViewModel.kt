@@ -62,6 +62,7 @@ class PacksViewModel(private val repo: PackRepository): ViewModel() {
     class Factory(context: Context) :
         ViewModelProvider.NewInstanceFactory() {
         private val appContext = context.applicationContext
+
         private val repo = PackRepository(AppDatabase.getDatabase(context = appContext).packDao())
 
         override fun <T : ViewModel?> create(modelClass: Class<T>): T {

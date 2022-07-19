@@ -5,7 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [PackageEntity::class], version = 1)
+@Database(entities = [PackageEntity::class], version = 2)
 abstract class AppDatabase : RoomDatabase(){
 
     abstract fun packDao(): PackageDao
@@ -23,6 +23,7 @@ abstract class AppDatabase : RoomDatabase(){
             ?: synchronized(this){
                 val inst = Room.databaseBuilder(
                     context.applicationContext, AppDatabase::class.java, "ble_adv_db")
+                    .fallbackToDestructiveMigration()
                     .build()
                 instanse = inst
                 return inst
